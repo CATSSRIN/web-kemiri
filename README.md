@@ -11,7 +11,8 @@ Aplikasi PHP native sederhana untuk bisnis Minyak Kemiri/Pomade dengan alur:
 ## Menjalankan aplikasi
 
 ```bash
-php -S 127.0.0.1:8000 -t /tmp/workspace/CATSSRIN/web-kemiri
+cd /tmp/workspace/CATSSRIN/web-kemiri
+php -S 127.0.0.1:8000 -t .
 ```
 
 Buka `http://127.0.0.1:8000/index.php`.

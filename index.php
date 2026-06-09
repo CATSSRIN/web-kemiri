@@ -29,7 +29,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $customerId = trim((string) ($_POST['customer_id'] ?? ''));
         $productId = trim((string) ($_POST['product_id'] ?? ''));
         $qtyInput = trim((string) ($_POST['qty'] ?? ''));
-        $qty = ctype_digit($qtyInput) ? (int) $qtyInput : 0;
+        $validatedQty = filter_var(
+            $qtyInput,
+            FILTER_VALIDATE_INT,
+            ['options' => ['min_range' => 1]]
+        );
+        $qty = $validatedQty === false ? 0 : $validatedQty;
 
         $customer = findById(allCustomers(), $customerId);
         $product = findById(allProducts(), $productId);
@@ -101,7 +106,7 @@ $prices = personalizedPrices();
 $orders = deliveryOrders();
 $allInvoices = invoices();
 
-function e(string $value): string
+function escapeHtml(string $value): string
 {
     return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 }
@@ -131,8 +136,8 @@ function e(string $value): string
     <h1>Web Kemiri (PHP Native)</h1>
     <p class="muted">Alur: buat Surat Jalan (DO) terlebih dulu, lalu tarik ke Invoicing. Relasi dijaga 1 DO : 1 Invoice.</p>
 
-    <?php if ($message !== ''): ?><p class="msg"><?= e($message) ?></p><?php endif; ?>
-    <?php if ($error !== ''): ?><p class="err"><?= e($error) ?></p><?php endif; ?>
+    <?php if ($message !== ''): ?><p class="msg"><?= escapeHtml($message) ?></p><?php endif; ?>
+    <?php if ($error !== ''): ?><p class="err"><?= escapeHtml($error) ?></p><?php endif; ?>
 
     <div class="box">
         <h2>Master Data Produk</h2>
@@ -140,9 +145,9 @@ function e(string $value): string
             <tr><th>ID Produk</th><th>Nama Produk</th><th>Harga Dasar</th></tr>
             <?php foreach ($products as $product): ?>
                 <tr>
-                    <td><?= e($product['id']) ?></td>
-                    <td><?= e($product['name']) ?></td>
-                    <td><?= e(formatRupiah((float) $product['price'])) ?></td>
+                    <td><?= escapeHtml($product['id']) ?></td>
+                    <td><?= escapeHtml($product['name']) ?></td>
+                    <td><?= escapeHtml(formatRupiah((float) $product['price'])) ?></td>
                 </tr>
             <?php endforeach; ?>
         </table>
@@ -154,15 +159,15 @@ function e(string $value): string
             <tr><th>ID</th><th>Nama</th><th>Email</th><th>No Telp</th><th>Alamat</th><th>Personalized Pricing</th></tr>
             <?php foreach ($customers as $customer): ?>
                 <tr>
-                    <td><?= e($customer['id']) ?></td>
-                    <td><?= e($customer['name']) ?></td>
-                    <td><?= e($customer['email']) ?></td>
-                    <td><?= e($customer['phone']) ?></td>
-                    <td><?= e($customer['address']) ?></td>
+                    <td><?= escapeHtml($customer['id']) ?></td>
+                    <td><?= escapeHtml($customer['name']) ?></td>
+                    <td><?= escapeHtml($customer['email']) ?></td>
+                    <td><?= escapeHtml($customer['phone']) ?></td>
+                    <td><?= escapeHtml($customer['address']) ?></td>
                     <td>
                         <?php if (isset($prices[$customer['id']])): ?>
                             <?php foreach ($prices[$customer['id']] as $productId => $price): ?>
-                                <div><?= e($productId) ?>: <?= e(formatRupiah((float) $price)) ?></div>
+                                <div><?= escapeHtml($productId) ?>: <?= escapeHtml(formatRupiah((float) $price)) ?></div>
                             <?php endforeach; ?>
                         <?php else: ?>
                             <span class="muted">Belum ada harga khusus</span>
@@ -178,13 +183,13 @@ function e(string $value): string
             <select name="customer_id" required>
                 <option value="">Pilih Pelanggan</option>
                 <?php foreach ($customers as $customer): ?>
-                    <option value="<?= e($customer['id']) ?>"><?= e($customer['id'] . ' - ' . $customer['name']) ?></option>
+                    <option value="<?= escapeHtml($customer['id']) ?>"><?= escapeHtml($customer['id'] . ' - ' . $customer['name']) ?></option>
                 <?php endforeach; ?>
             </select>
             <select name="product_id" required>
                 <option value="">Pilih Produk</option>
                 <?php foreach ($products as $product): ?>
-                    <option value="<?= e($product['id']) ?>"><?= e($product['id'] . ' - ' . $product['name']) ?></option>
+                    <option value="<?= escapeHtml($product['id']) ?>"><?= escapeHtml($product['id'] . ' - ' . $product['name']) ?></option>
                 <?php endforeach; ?>
             </select>
             <input type="number" name="price" min="1" step="1" placeholder="Harga khusus" required>
@@ -199,13 +204,13 @@ function e(string $value): string
             <select name="customer_id" required>
                 <option value="">Pilih Pelanggan</option>
                 <?php foreach ($customers as $customer): ?>
-                    <option value="<?= e($customer['id']) ?>"><?= e($customer['id'] . ' - ' . $customer['name']) ?></option>
+                    <option value="<?= escapeHtml($customer['id']) ?>"><?= escapeHtml($customer['id'] . ' - ' . $customer['name']) ?></option>
                 <?php endforeach; ?>
             </select>
             <select name="product_id" required>
                 <option value="">Pilih Produk</option>
                 <?php foreach ($products as $product): ?>
-                    <option value="<?= e($product['id']) ?>"><?= e($product['id'] . ' - ' . $product['name']) ?></option>
+                    <option value="<?= escapeHtml($product['id']) ?>"><?= escapeHtml($product['id'] . ' - ' . $product['name']) ?></option>
                 <?php endforeach; ?>
             </select>
             <input type="number" name="qty" min="1" step="1" placeholder="Qty" required>
@@ -222,19 +227,19 @@ function e(string $value): string
             <?php else: ?>
                 <?php foreach ($orders as $order): ?>
                     <tr>
-                        <td><?= e($order['id']) ?></td>
-                        <td><?= e($order['customer_name']) ?></td>
-                        <td><?= e($order['product_name']) ?></td>
-                        <td><?= e($order['product_code']) ?></td>
-                        <td><?= e((string) $order['qty']) ?></td>
-                        <td><?= e(formatRupiah((float) $order['unit_price'])) ?></td>
-                        <td><?= e(formatRupiah((float) $order['total'])) ?></td>
-                        <td><?= e((string) ($order['invoice_id'] ?? '-')) ?></td>
+                        <td><?= escapeHtml($order['id']) ?></td>
+                        <td><?= escapeHtml($order['customer_name']) ?></td>
+                        <td><?= escapeHtml($order['product_name']) ?></td>
+                        <td><?= escapeHtml($order['product_code']) ?></td>
+                        <td><?= escapeHtml((string) $order['qty']) ?></td>
+                        <td><?= escapeHtml(formatRupiah((float) $order['unit_price'])) ?></td>
+                        <td><?= escapeHtml(formatRupiah((float) $order['total'])) ?></td>
+                        <td><?= escapeHtml((string) ($order['invoice_id'] ?? '-')) ?></td>
                         <td>
                             <?php if ($order['invoice_id'] === null): ?>
                                 <form method="post">
                                     <input type="hidden" name="action" value="create_invoice">
-                                    <input type="hidden" name="do_id" value="<?= e($order['id']) ?>">
+                                    <input type="hidden" name="do_id" value="<?= escapeHtml($order['id']) ?>">
                                     <button type="submit">Tarik ke Invoice</button>
                                 </form>
                             <?php else: ?>
@@ -256,14 +261,14 @@ function e(string $value): string
             <?php else: ?>
                 <?php foreach ($allInvoices as $invoice): ?>
                     <tr>
-                        <td><?= e($invoice['id']) ?></td>
-                        <td><?= e($invoice['do_id']) ?></td>
-                        <td><?= e($invoice['customer_name']) ?></td>
-                        <td><?= e($invoice['product_name']) ?></td>
-                        <td><?= e($invoice['product_code']) ?></td>
-                        <td><?= e((string) $invoice['qty']) ?></td>
-                        <td><?= e(formatRupiah((float) $invoice['unit_price'])) ?></td>
-                        <td><?= e(formatRupiah((float) $invoice['total'])) ?></td>
+                        <td><?= escapeHtml($invoice['id']) ?></td>
+                        <td><?= escapeHtml($invoice['do_id']) ?></td>
+                        <td><?= escapeHtml($invoice['customer_name']) ?></td>
+                        <td><?= escapeHtml($invoice['product_name']) ?></td>
+                        <td><?= escapeHtml($invoice['product_code']) ?></td>
+                        <td><?= escapeHtml((string) $invoice['qty']) ?></td>
+                        <td><?= escapeHtml(formatRupiah((float) $invoice['unit_price'])) ?></td>
+                        <td><?= escapeHtml(formatRupiah((float) $invoice['total'])) ?></td>
                     </tr>
                 <?php endforeach; ?>
             <?php endif; ?>
